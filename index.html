@@ -2,79 +2,109 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador Sincronizado DigiArt</title>
+    <title>Gerador DigiArt AR - Padrão Sincronizado</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
-        h2 { color: #0d47a1; margin-bottom: 10px; }
-        input { width: 100px; padding: 12px; margin: 20px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; text-align: center; }
-        button { background: #2e7d32; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
-        button:hover { background: #1b5e20; }
-        .aviso { font-size: 12px; color: #666; margin-top: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #002171; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; color: #333; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 450px; }
+        h1 { color: #0d47a1; margin-bottom: 5px; font-size: 28px; font-weight: 800; }
+        h2 { color: #ffca28; font-size: 14px; margin-top: 0; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        .campo { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: #0d47a1; }
+        button { background: #2e7d32; color: white; border: none; padding: 18px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 0 #1b5e20; }
+        button:hover { background: #1b5e20; transform: translateY(-2px); box-shadow: 0 6px 0 #0e3511; }
+        button:active { transform: translateY(2px); box-shadow: none; }
+        .footer { font-size: 11px; color: #aaa; margin-top: 25px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Fábrica DigiArt AR</h2>
-    <p>Quantos tokens sincronizados?</p>
-    <input type="number" id="qtd" value="10" min="1">
-    <br>
-    <button onclick="gerarSincronizado()">GERAR ARQUIVOS GÊMEOS</button>
-    <p class="aviso">Um clique vai baixar o .JSON e o .XLSX exatamente iguais.</p>
+    <h1>DIGIART AR</h1>
+    <h2>Gerador de Tokens Sincronizados</h2>
+
+    <div class="campo">
+        <label>Nome do Cliente (João do Gás, etc):</label>
+        <input type="text" id="cliente" placeholder="Identifique o pedido aqui...">
+    </div>
+
+    <div class="campo">
+        <label>Quantidade de Tokens:</label>
+        <input type="number" id="qtd" value="1" min="1">
+    </div>
+
+    <button onclick="gerarTudo()">GERAR JSON + EXCEL</button>
+    
+    <div class="footer">
+        Padronagem: <b>letra + 4 números + letra</b> (ex: s1234j)<br>
+        Arquivos gerados simultaneamente para evitar erros.
+    </div>
 </div>
 
 <script>
-function criarToken() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let res = 's'; // Prefixo que você definiu
-    for (let i = 0; i < 5; i++) {
-        res += chars.charAt(Math.floor(Math.random() * chars.length));
+// Função que cria o token exatamente no padrão: Letra + 4 Números + Letra
+function criarTokenPadrao() {
+    const letras = 'abcdefghijklmnopqrstuvwxyz';
+    const numeros = '0123456789';
+    
+    const letraInicial = letras.charAt(Math.floor(Math.random() * letras.length));
+    const letraFinal = letras.charAt(Math.floor(Math.random() * letras.length));
+    
+    let meio = '';
+    for (let i = 0; i < 4; i++) {
+        meio += numeros.charAt(Math.floor(Math.random() * numeros.length));
     }
-    return res;
+    
+    return (letraInicial + meio + letraFinal).toLowerCase();
 }
 
-function gerarSincronizado() {
+function gerarTudo() {
+    const clienteInput = document.getElementById('cliente').value.trim();
+    const cliente = clienteInput || "Cliente_Geral";
     const qtd = document.getElementById('qtd').value;
+    
     const tokensFirebase = {};
     const dadosExcel = [];
 
-    // O SEGREDO: Gerar uma única vez e guardar nas duas listas
     for (let i = 1; i <= qtd; i++) {
-        const oToken = criarToken();
-        const oId = "MSB-" + Math.floor(1000 + Math.random() * 9000);
+        const oToken = criarTokenPadrao();
+        const oId = "MSB-" + Math.floor(1000 + Math.random() * 9999);
 
-        // 1. Vai para o objeto do Firebase (Onde o Token é a CHAVE principal)
+        // Firebase (Token como CHAVE)
         tokensFirebase[oToken] = {
-            id: oId,
-            status: "disponivel"
+            cliente: cliente,
+            id_controle: oId,
+            status: "disponivel",
+            data: new Date().toLocaleDateString('pt-BR')
         };
 
-        // 2. Vai para a lista do Excel (Exatamente o mesmo Token e ID)
+        // Excel
         dadosExcel.push({
+            "CLIENTE": cliente,
             "ID_CONTROLE": oId,
             "TOKEN": oToken,
             "STATUS": "disponivel"
         });
     }
 
-    // --- DOWNLOAD DO JSON (FIREBASE) ---
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokensFirebase, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "tokens_firebase_NOVO.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const nomeBase = "DigiArt_" + cliente.replace(/\s+/g, '_');
 
-    // --- DOWNLOAD DO EXCEL (VOCÊ) ---
+    // Download JSON
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokensFirebase, null, 2));
+    const linkJson = document.createElement('a');
+    linkJson.href = dataStr;
+    linkJson.download = nomeBase + ".json";
+    linkJson.click();
+
+    // Download Excel
     const ws = XLSX.utils.json_to_sheet(dadosExcel);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Lista Oficial");
-    XLSX.writeFile(wb, "seu_controle_excel_NOVO.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Tokens");
+    XLSX.writeFile(wb, nomeBase + ".xlsx");
 
-    alert("Pronto! Verifique seus downloads. Os dois arquivos são idênticos.");
+    alert("✅ Gerado com sucesso!\n\nConfira seus downloads.");
 }
 </script>
 </body>
