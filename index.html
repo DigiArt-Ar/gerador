@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador DigiArt AR - Padrão Sincronizado</title>
+    <title>Gerador DigiArt AR - Padrão Sincronizado V4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #002171; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
@@ -23,11 +23,11 @@
 
 <div class="card">
     <h1>DIGIART AR</h1>
-    <h2>Gerador de Tokens Sincronizados</h2>
+    <h2>Gerador Oficial de Tokens</h2>
 
     <div class="campo">
-        <label>Nome do Cliente (João do Gás, etc):</label>
-        <input type="text" id="cliente" placeholder="Identifique o pedido aqui...">
+        <label>Nome do Cliente / Identificação do Lote:</label>
+        <input type="text" id="cliente" placeholder="Ex: João do Gás / Maria Salgado">
     </div>
 
     <div class="campo">
@@ -35,11 +35,11 @@
         <input type="number" id="qtd" value="1" min="1">
     </div>
 
-    <button onclick="gerarTudo()">GERAR JSON + EXCEL</button>
+    <button onclick="gerarTudoSincronizado()">GERAR ARQUIVOS GÊMEOS (JSON + EXCEL)</button>
     
     <div class="footer">
-        Padronagem: <b>letra + 4 números + letra</b> (ex: s1234j)<br>
-        Arquivos gerados simultaneamente para evitar erros.
+        Um clique vai baixar o .JSON e o .XLSX exatamente iguais.<br>
+        Padrão do token: <b>letra + 4 números + letra</b> (ex: s1234j).
     </div>
 </div>
 
@@ -49,62 +49,72 @@ function criarTokenPadrao() {
     const letras = 'abcdefghijklmnopqrstuvwxyz';
     const numeros = '0123456789';
     
+    // Sorteia letras inicial e final
     const letraInicial = letras.charAt(Math.floor(Math.random() * letras.length));
     const letraFinal = letras.charAt(Math.floor(Math.random() * letras.length));
     
+    // Sorteia os 4 números do meio
     let meio = '';
     for (let i = 0; i < 4; i++) {
         meio += numeros.charAt(Math.floor(Math.random() * numeros.length));
     }
     
+    // Retorna tudo junto e forçado em minúsculo
     return (letraInicial + meio + letraFinal).toLowerCase();
 }
 
-function gerarTudo() {
+function gerarTudoSincronizado() {
     const clienteInput = document.getElementById('cliente').value.trim();
+    // Define um nome padrão caso o campo esteja vazio
     const cliente = clienteInput || "Cliente_Geral";
     const qtd = document.getElementById('qtd').value;
     
     const tokensFirebase = {};
     const dadosExcel = [];
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
 
+    // O SEGREDO: Gerar as listas a partir da mesma rodada de sorteios
     for (let i = 1; i <= qtd; i++) {
         const oToken = criarTokenPadrao();
         const oId = "MSB-" + Math.floor(1000 + Math.random() * 9999);
 
-        // Firebase (Token como CHAVE)
+        // 1. Vai para o objeto do Firebase (Onde o Token é a CHAVE principal/nome da pasta)
         tokensFirebase[oToken] = {
             cliente: cliente,
             id_controle: oId,
             status: "disponivel",
-            data: new Date().toLocaleDateString('pt-BR')
+            data_geracao: dataAtual
         };
 
-        // Excel
+        // 2. Vai para a lista do Excel (Exatamente os mesmos dados)
         dadosExcel.push({
             "CLIENTE": cliente,
             "ID_CONTROLE": oId,
             "TOKEN": oToken,
-            "STATUS": "disponivel"
+            "STATUS": "disponivel",
+            "DATA_GERACAO": dataAtual
         });
     }
 
+    // Gerar nome do arquivo baseado no cliente (remove espaços)
     const nomeBase = "DigiArt_" + cliente.replace(/\s+/g, '_');
 
-    // Download JSON
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokensFirebase, null, 2));
-    const linkJson = document.createElement('a');
-    linkJson.href = dataStr;
-    linkJson.download = nomeBase + ".json";
-    linkJson.click();
+    // --- DOWNLOAD JSON (FIREBASE) ---
+    const dataStrJson = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokensFirebase, null, 2));
+    const downloadAnchorJson = document.createElement('a');
+    downloadAnchorJson.setAttribute("href", dataStrJson);
+    downloadAnchorJson.setAttribute("download", nomeBase + ".json");
+    document.body.appendChild(downloadAnchorJson);
+    downloadAnchorJson.click();
+    downloadAnchorJson.remove();
 
-    // Download Excel
+    // --- DOWNLOAD EXCEL (VOCÊ) ---
     const ws = XLSX.utils.json_to_sheet(dadosExcel);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Tokens");
+    XLSX.utils.book_append_sheet(wb, ws, "Lista Oficial");
     XLSX.writeFile(wb, nomeBase + ".xlsx");
 
-    alert("✅ Gerado com sucesso!\n\nConfira seus downloads.");
+    alert("✅ Sucesso!\n\nForam gerados " + qtd + " tokens para o cliente: " + cliente + ".");
 }
 </script>
 </body>
