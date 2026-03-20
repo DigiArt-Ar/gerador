@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador DigiArt Ar v1.8</title>
+    <title>Painel DigiArt Ar</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 420px; overflow: hidden; border: 1px solid #d1e3f8; }
-        .banner-header { background: #ffffff; padding: 25px 15px; text-align: center; border-bottom: 2px solid #3A78B8; min-height: 100px; }
-        .banner-img { max-width: 90%; height: auto; display: block; margin: 0 auto; }
-        .card-body { padding: 30px; text-align: center; }
+        .banner-header { background: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #3A78B8; }
+        .banner-img { max-width: 85%; height: auto; display: block; margin: 0 auto; }
+        .card-body { padding: 30px; }
         .section-title { color: #003366; font-size: 17px; font-weight: bold; margin-bottom: 20px; border-left: 4px solid #3A78B8; padding-left: 10px; text-align: left; text-transform: uppercase; }
         label { display: block; text-align: left; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 14px; }
-        input { width: 100%; padding: 14px; margin-bottom: 20px; border: 2px solid #e1e8ed; border-radius: 12px; box-sizing: border-box; font-size: 17px; }
-        .actions { margin-top: 10px; }
-        button { width: 100%; padding: 17px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 12px; text-transform: uppercase; }
+        input { width: 100%; padding: 14px; margin-bottom: 20px; border: 2px solid #e1e8ed; border-radius: 12px; box-sizing: border-box; font-size: 17px; background: #f9fbff; }
+        button { width: 100%; padding: 17px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 12px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-csv { background: #28a745; }
         .btn-json { background: #ff8c00; }
-        .footer-bar { background: #003366; color: white; padding: 12px; text-align: center; font-size: 11px; font-style: italic; }
+        .footer-bar { background: #003366; color: white; padding: 12px; text-align: center; font-size: 11px; font-style: italic; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -30,38 +29,35 @@
     <div class="card-body">
         <div class="section-title">1. Configurar Lote</div>
         <label>Prefixo (Ex: MSB):</label>
-        <input type="text" id="prefixo" placeholder="DA" maxlength="5">
+        <input type="text" id="prefixo" placeholder="DA" maxlength="5" oninput="this.value = this.value.toUpperCase()">
 
         <label>Quantidade:</label>
         <input type="number" id="qtd" value="10">
 
         <div class="section-title">2. Ações</div>
-        <div class="actions">
-            <button class="btn-csv" onclick="gerar('csv')">📂 Gerar Planilha Excel</button>
-            <button class="btn-json" onclick="gerar('json')">🔥 Gerar para Firebase</button>
-        </div>
+        <button class="btn-csv" id="btnCsv">📂 Gerar Planilha Excel</button>
+        <button class="btn-json" id="btnJson">🔥 Gerar para Firebase</button>
     </div>
     <div class="footer-bar">ONDE O PAPEL GANHA VIDA.</div>
 </div>
 
 <script>
-    function gerar(tipo) {
+    function executarDownload(tipo) {
         const prefixo = document.getElementById('prefixo').value.toUpperCase() || 'DA';
         const qtd = parseInt(document.getElementById('qtd').value) || 1;
-        
         let conteudo = "";
         let nomeArquivo = "";
         let mimeType = "";
 
         if (tipo === 'csv') {
-            conteudo = "ID_CONTROLE;TOKEN;PREFIXO;STATUS\n";
+            conteudo = "ID_CONTROLE;TOKEN;PREFIXO;STATUS\r\n";
             for (let i = 0; i < qtd; i++) {
                 const id = prefixo + "-" + Math.random().toString(36).substr(2, 4).toUpperCase();
                 const token = "s" + Math.floor(1000 + Math.random() * 9000) + Math.random().toString(36).substr(2, 1).toLowerCase();
-                conteudo += id + ";" + token + ";" + prefixo + ";disponivel\n";
+                conteudo += id + ";" + token + ";" + prefixo + ";disponivel\r\n";
             }
             nomeArquivo = "lote_" + prefixo + ".csv";
-            mimeType = "text/csv;charset=utf-8;";
+            mimeType = "text/csv;charset=utf-8";
         } else {
             let lista = [];
             for (let i = 0; i < qtd; i++) {
@@ -71,17 +67,27 @@
             }
             conteudo = JSON.stringify(lista, null, 2);
             nomeArquivo = "firebase_" + prefixo + ".json";
-            mimeType = "application/json";
+            mimeType = "application/json;charset=utf-8";
         }
 
         const blob = new Blob([conteudo], { type: mimeType });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = nomeArquivo;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Limpeza para o computador não travar
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
     }
+
+    document.getElementById('btnCsv').addEventListener('click', () => executarDownload('csv'));
+    document.getElementById('btnJson').addEventListener('click', () => executarDownload('json'));
 </script>
 </body>
 </html>
