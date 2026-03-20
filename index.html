@@ -2,73 +2,79 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador de Tokens DigiArt</title>
+    <title>Gerador Sincronizado DigiArt</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f0f2f5; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        input { padding: 10px; width: 80px; margin: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background: #0d47a1; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #002171; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+        h2 { color: #0d47a1; margin-bottom: 10px; }
+        input { width: 100px; padding: 12px; margin: 20px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; text-align: center; }
+        button { background: #2e7d32; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
+        button:hover { background: #1b5e20; }
+        .aviso { font-size: 12px; color: #666; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Fábrica de Tokens DigiArt</h2>
-    <p>Quantos tokens você deseja gerar?</p>
-    <input type="number" id="qtd" value="10">
-    <br><br>
-    <button onclick="gerarTudo()">GERAR E BAIXAR ARQUIVOS</button>
+    <h2>Fábrica DigiArt AR</h2>
+    <p>Quantos tokens sincronizados?</p>
+    <input type="number" id="qtd" value="10" min="1">
+    <br>
+    <button onclick="gerarSincronizado()">GERAR ARQUIVOS GÊMEOS</button>
+    <p class="aviso">Um clique vai baixar o .JSON e o .XLSX exatamente iguais.</p>
 </div>
 
 <script>
-function gerarToken() {
+function criarToken() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let res = 's'; // Todos começam com 's' conforme sua preferência
+    let res = 's'; // Prefixo que você definiu
     for (let i = 0; i < 5; i++) {
         res += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return res;
 }
 
-function gerarTudo() {
-    const quantidade = document.getElementById('qtd').value;
+function gerarSincronizado() {
+    const qtd = document.getElementById('qtd').value;
     const tokensFirebase = {};
     const dadosExcel = [];
 
-    for (let i = 1; i <= quantidade; i++) {
-        const token = gerarToken();
-        const idControle = "MSB-" + Math.floor(1000 + Math.random() * 9000);
+    // O SEGREDO: Gerar uma única vez e guardar nas duas listas
+    for (let i = 1; i <= qtd; i++) {
+        const oToken = criarToken();
+        const oId = "MSB-" + Math.floor(1000 + Math.random() * 9000);
 
-        // Estrutura para o Firebase (Sincronizada)
-        tokensFirebase[token] = {
-            id: idControle,
+        // 1. Vai para o objeto do Firebase (Onde o Token é a CHAVE principal)
+        tokensFirebase[oToken] = {
+            id: oId,
             status: "disponivel"
         };
 
-        // Estrutura para o Excel
+        // 2. Vai para a lista do Excel (Exatamente o mesmo Token e ID)
         dadosExcel.push({
-            "ID_CONTROLE": idControle,
-            "TOKEN": token,
+            "ID_CONTROLE": oId,
+            "TOKEN": oToken,
             "STATUS": "disponivel"
         });
     }
 
-    // 1. Baixar JSON para o Firebase
-    const blobJson = new Blob([JSON.stringify(tokensFirebase, null, 2)], {type: "application/json"});
-    const linkJson = document.createElement("a");
-    linkJson.href = URL.createObjectURL(blobJson);
-    linkJson.download = "tokens_para_firebase.json";
-    linkJson.click();
+    // --- DOWNLOAD DO JSON (FIREBASE) ---
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokensFirebase, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "tokens_firebase_NOVO.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
 
-    // 2. Baixar Excel para você
+    // --- DOWNLOAD DO EXCEL (VOCÊ) ---
     const ws = XLSX.utils.json_to_sheet(dadosExcel);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Tokens");
-    XLSX.writeFile(wb, "lista_clientes_sincronizada.xlsx");
-    
-    alert("✅ Sucesso! Os dois arquivos foram baixados e estão IGUAIS.");
+    XLSX.utils.book_append_sheet(wb, ws, "Lista Oficial");
+    XLSX.writeFile(wb, "seu_controle_excel_NOVO.xlsx");
+
+    alert("Pronto! Verifique seus downloads. Os dois arquivos são idênticos.");
 }
 </script>
 </body>
