@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Tokens | DigiArt Ar v1.5</title>
+    <title>Painel de Tokens | DigiArt Ar v1.6 (GitHub Edition)</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 420px; overflow: hidden; border: 1px solid #d1e3f8; }
         
-        /* Banner Header - Puxando a imagem do seu GitHub */
-        .banner-header { background: #ffffff; padding: 30px 15px; text-align: center; border-bottom: 2px solid #3A78B8; }
+        /* Banner Header - Puxando o arquivo JPEG do seu GitHub */
+        .banner-header { background: #ffffff; padding: 25px 15px; text-align: center; border-bottom: 2px solid #3A78B8; }
         
-        /* Aqui está o segredo: ele procura 'logo-digiart-ar.png' na mesma pasta */
+        /* O segredo: o código agora procura 'logo-digiart-ar.jpg' na mesma pasta */
         .banner-img { max-width: 90%; height: auto; display: inline-block; }
 
         /* Estilo para quando a imagem não carrega (alt) */
@@ -25,73 +25,7 @@
         input:focus { border-color: #3A78B8; outline: none; background: #f9fbff; }
         
         .actions { margin-top: 10px; }
-        button { width: 100%; padding: 17px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; text-transform: uppercase; }
+        button { width: 100%; padding: 17px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 10px; }
         
         .btn-csv { background: #28a745; box-shadow: 0 4px 0 #1e7e34; }
-        .btn-json { background: #ff8c00; box-shadow: 0 4px 0 #cc7000; }
-        button:active { transform: translateY(3px); box-shadow: none; }
-        
-        .footer-bar { background: #003366; color: rgba(255,255,255,0.7); padding: 12px; text-align: center; font-size: 11px; font-style: italic; letter-spacing: 1px; text-transform: uppercase; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <div class="banner-header">
-        <img src="logo-digiart-ar.png" alt="DigiArt Ar Oficial" class="banner-img">
-    </div>
-    
-    <div class="card-body">
-        <div class="section-title">1. Configurar o Lote</div>
-        
-        <label>Prefixo do Cliente (Ex: MSB, MAR):</label>
-        <input type="text" id="prefixo" placeholder="DIGITE O PREFIXO..." maxlength="5" oninput="this.value = this.value.toUpperCase()">
-
-        <label>Quantidade de Tokens:</label>
-        <input type="number" id="qtd" placeholder="EX: 50" min="1">
-
-        <div class="section-title">2. Ações</div>
-        <div class="actions">
-            <button class="btn-csv" onclick="gerar('csv')">📂 Gerar Planilha (Corel)</button>
-            <button class="btn-json" onclick="gerar('json')">🔥 Subir para o Firebase</button>
-        </div>
-    </div>
-
-    <div class="footer-bar">
-        ONDE O PAPEL GANHA VIDA.
-    </div>
-</div>
-
-<script>
-    function gerar(tipo) {
-        const prefixo = document.getElementById('prefixo').value.toUpperCase() || 'DA';
-        const qtd = document.getElementById('qtd').value || 10;
-        let csvContent = "ID_CONTROLE;TOKEN;PREFIXO;STATUS\n";
-        let jsonData = [];
-
-        for (let i = 0; i < qtd; i++) {
-            const idControle = prefixo + "-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-            // Padrão de token: s + 4 numeros + 1 letra minuscula (ex: s4592k)
-            const token = "s" + Math.floor(1000 + Math.random() * 9000) + Math.random().toString(36).substr(2, 1).toLowerCase();
-            
-            if (tipo === 'csv') {
-                csvContent += ${idControle};${token};${prefixo};disponivel\n;
-            } else {
-                jsonData.push({ id: idControle, token: token, prefixo: prefixo, status: "disponivel" });
-            }
-        }
-
-        const blob = new Blob([tipo === 'csv' ? csvContent : JSON.stringify(jsonData, null, 2)], 
-            { type: tipo === 'csv' ? 'text/csv;charset=utf-8;' : 'application/json' });
-        
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = lote_${prefixo}_${qtd}.${tipo};
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-</script>
-
-</body>
-</html>
+        .btn-json { background: #ff8c0
