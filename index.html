@@ -2,8 +2,10 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador DigiArt AR - Padrão Sincronizado V4</title>
+    <title>Gerador DigiArt AR - Sincronização Direta</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #002171; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: white; color: #333; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 450px; }
@@ -15,19 +17,19 @@
         input:focus { border-color: #0d47a1; }
         button { background: #2e7d32; color: white; border: none; padding: 18px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 0 #1b5e20; }
         button:hover { background: #1b5e20; transform: translateY(-2px); box-shadow: 0 6px 0 #0e3511; }
-        button:active { transform: translateY(2px); box-shadow: none; }
         .footer { font-size: 11px; color: #aaa; margin-top: 25px; line-height: 1.5; }
+        #status-msg { margin-top: 15px; font-size: 14px; font-weight: bold; color: #2e7d32; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>DIGIART AR</h1>
-    <h2>Gerador Oficial de Tokens</h2>
+    <h2>Gerador Sincronizado (SOMA)</h2>
 
     <div class="campo">
         <label>Nome do Cliente / Identificação do Lote:</label>
-        <input type="text" id="cliente" placeholder="Ex: João do Gás / Maria Salgado">
+        <input type="text" id="cliente" placeholder="Ex: João do Gás">
     </div>
 
     <div class="campo">
@@ -35,50 +37,54 @@
         <input type="number" id="qtd" value="1" min="1">
     </div>
 
-    <button onclick="gerarTudoSincronizado()">GERAR ARQUIVOS GÊMEOS (JSON + EXCEL)</button>
+    <button onclick="gerarTudoDiretoNoFirebase()">GERAR E SALVAR NO FIREBASE</button>
+    <div id="status-msg"></div>
     
     <div class="footer">
-        Um clique vai baixar o .JSON e o .XLSX exatamente iguais.<br>
-        Padrão do token: <b>letra + 4 números + letra</b> (ex: s1234j).
+        O sistema enviará os tokens para a pasta <b>/tokens</b> sem apagar os antigos.<br>
+        O Excel será baixado automaticamente.
     </div>
 </div>
 
 <script>
-// Função que cria o token exatamente no padrão: Letra + 4 Números + Letra
+const firebaseConfig = {
+    apiKey: "AIzaSyDG-0ErUD35BZTHb9RZ21fFnXcMkX-IlZY",
+    authDomain: "digiart-ar-sistema.firebaseapp.com",
+    databaseURL: "https://digiart-ar-sistema-default-rtdb.firebaseio.com",
+    projectId: "digiart-ar-sistema",
+    storageBucket: "digiart-ar-sistema.firebasestorage.app",
+    messagingSenderId: "497522538079",
+    appId: "1:497522538079:web:6ee88681098324dc28cdea"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 function criarTokenPadrao() {
     const letras = 'abcdefghijklmnopqrstuvwxyz';
     const numeros = '0123456789';
-    
-    // Sorteia letras inicial e final
     const letraInicial = letras.charAt(Math.floor(Math.random() * letras.length));
     const letraFinal = letras.charAt(Math.floor(Math.random() * letras.length));
-    
-    // Sorteia os 4 números do meio
     let meio = '';
-    for (let i = 0; i < 4; i++) {
-        meio += numeros.charAt(Math.floor(Math.random() * numeros.length));
-    }
-    
-    // Retorna tudo junto e forçado em minúsculo
+    for (let i = 0; i < 4; i++) { meio += numeros.charAt(Math.floor(Math.random() * numeros.length)); }
     return (letraInicial + meio + letraFinal).toLowerCase();
 }
 
-function gerarTudoSincronizado() {
+async function gerarTudoDiretoNoFirebase() {
     const clienteInput = document.getElementById('cliente').value.trim();
-    // Define um nome padrão caso o campo esteja vazio
     const cliente = clienteInput || "Cliente_Geral";
-    const qtd = document.getElementById('qtd').value;
+    const qtd = parseInt(document.getElementById('qtd').value);
+    const statusMsg = document.getElementById('status-msg');
+    
+    statusMsg.innerText = "⏳ Sincronizando com Firebase...";
     
     const tokensFirebase = {};
     const dadosExcel = [];
     const dataAtual = new Date().toLocaleDateString('pt-BR');
 
-    // O SEGREDO: Gerar as listas a partir da mesma rodada de sorteios
     for (let i = 1; i <= qtd; i++) {
         const oToken = criarTokenPadrao();
         const oId = "MSB-" + Math.floor(1000 + Math.random() * 9999);
 
-        // 1. Vai para o objeto do Firebase (Onde o Token é a CHAVE principal/nome da pasta)
         tokensFirebase[oToken] = {
             cliente: cliente,
             id_controle: oId,
@@ -86,7 +92,6 @@ function gerarTudoSincronizado() {
             data_geracao: dataAtual
         };
 
-        // 2. Vai para a lista do Excel (Exatamente os mesmos dados)
         dadosExcel.push({
             "CLIENTE": cliente,
             "ID_CONTROLE": oId,
@@ -96,25 +101,21 @@ function gerarTudoSincronizado() {
         });
     }
 
-    // Gerar nome do arquivo baseado no cliente (remove espaços)
-    const nomeBase = "DigiArt_" + cliente.replace(/\s+/g, '_');
+    try {
+        // Envia para o Firebase SOMANDO (update)
+        await database.ref('tokens').update(tokensFirebase);
 
-    // --- DOWNLOAD JSON (FIREBASE) ---
-    const dataStrJson = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokensFirebase, null, 2));
-    const downloadAnchorJson = document.createElement('a');
-    downloadAnchorJson.setAttribute("href", dataStrJson);
-    downloadAnchorJson.setAttribute("download", nomeBase + ".json");
-    document.body.appendChild(downloadAnchorJson);
-    downloadAnchorJson.click();
-    downloadAnchorJson.remove();
+        // Gera o Excel
+        const nomeBase = "DigiArt_" + cliente.replace(/\s+/g, '_');
+        const ws = XLSX.utils.json_to_sheet(dadosExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Lista Oficial");
+        XLSX.writeFile(wb, nomeBase + ".xlsx");
 
-    // --- DOWNLOAD EXCEL (VOCÊ) ---
-    const ws = XLSX.utils.json_to_sheet(dadosExcel);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Lista Oficial");
-    XLSX.writeFile(wb, nomeBase + ".xlsx");
-
-    alert("✅ Sucesso!\n\nForam gerados " + qtd + " tokens para o cliente: " + cliente + ".");
+        statusMsg.innerText = "✅ " + qtd + " tokens salvos e Excel pronto!";
+    } catch (error) {
+        statusMsg.innerText = "❌ Erro ao salvar: " + error.message;
+    }
 }
 </script>
 </body>
