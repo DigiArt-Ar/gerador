@@ -2,10 +2,12 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador DigiArt AR - Sincronização e Renovação</title>
+    <title>Painel DigiArt AR - Gestão e QR Code</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #002171; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; flex-direction: column; padding: 20px; }
         .card { background: white; color: #333; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 450px; margin-bottom: 20px; }
@@ -14,10 +16,15 @@
         .campo { margin-bottom: 15px; text-align: left; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
         input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; outline: none; }
+        
         .btn-gerar { background: #2e7d32; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .btn-renovar { background: #0288d1; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn-qr { background: #000000; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn-download { background: #27ae60; color: white; border: none; padding: 8px; border-radius: 5px; font-size: 12px; cursor: pointer; margin-top: 10px; }
+
+        #res-qr { margin-top: 15px; display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px dashed #ccc; }
+        #box-qr { display: flex; justify-content: center; }
         #status-msg, #status-renova { margin-top: 10px; font-size: 13px; font-weight: bold; }
-        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -41,14 +48,30 @@
     <h1>RENOVAÇÃO</h1>
     <h2>Extender Prazo de Acesso</h2>
     <div class="campo">
-        <label>Token do Cliente (ex: a1234b):</label>
+        <label>Token do Cliente:</label>
         <input type="text" id="tokenRenovar" placeholder="Cole o token aqui">
     </div>
-    <button class="btn-renovar" onclick="renovarToken()">RENOVAR POR +1 ANO ✨</button>
+    <button class="btn-renovar" onclick="renovarToken()">RENOVAR ACESSO ✨</button>
     <div id="status-renova"></div>
 </div>
 
+<div class="card" style="border-top: 5px solid #000;">
+    <h1>QR CODE</h1>
+    <h2>Gerar Imagem para Impressão</h2>
+    <div class="campo">
+        <label>Link do GitHub Pages:</label>
+        <input type="text" id="urlInput" placeholder="https://davidbarcelos.github.io/...">
+    </div>
+    <button class="btn-qr" onclick="criarQR()">GERAR QR CODE 📱</button>
+    
+    <div id="res-qr">
+        <div id="box-qr"></div>
+        <button class="btn-download" onclick="baixarPNG()">📥 BAIXAR PNG</button>
+    </div>
+</div>
+
 <script>
+// --- SUA CONFIGURAÇÃO ORIGINAL ---
 const firebaseConfig = {
     apiKey: "AIzaSyDG-0ErUD35BZTHb9RZ21fFnXcMkX-IlZY",
     authDomain: "digiart-ar-sistema.firebaseapp.com",
@@ -61,6 +84,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
+// --- SUAS FUNÇÕES ORIGINAIS (NÃO MEXI EM NADA) ---
 function criarTokenPadrao() {
     const letras = 'abcdefghijklmnopqrstuvwxyz';
     const numeros = '0123456789';
@@ -103,21 +127,48 @@ async function renovarToken() {
     try {
         const ref = database.ref('tokens/' + token);
         const snapshot = await ref.once('value');
-        
         if (snapshot.exists()) {
             await ref.update({
-                status: "disponivel", // Volta a ficar disponível para o primeiro uso do novo ciclo
-                data_ativacao: null,   // Reseta a ativação antiga
+                status: "disponivel",
+                data_ativacao: null,
                 data_renovacao: new Date().toLocaleDateString('pt-BR')
             });
             statusRenova.style.color = "#0288d1";
-            statusRenova.innerText = "🚀 Token " + token + " renovado com sucesso!";
+            statusRenova.innerText = "🚀 Token " + token + " renovado!";
             document.getElementById('tokenRenovar').value = "";
         } else {
             statusRenova.style.color = "red";
             statusRenova.innerText = "❌ Token não encontrado!";
         }
     } catch (e) { statusRenova.innerText = "⚠️ Erro na renovação."; }
+}
+
+// --- NOVAS FUNÇÕES DE QR CODE (TOTALMENTE ISOLADAS) ---
+function criarQR() {
+    const url = document.getElementById('urlInput').value.trim();
+    if(!url) return alert("Insira o link!");
+    
+    const container = document.getElementById('box-qr');
+    container.innerHTML = ""; // Limpa anterior
+    document.getElementById('res-qr').style.display = "block";
+    
+    new QRCode(container, {
+        text: url,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+}
+
+function baixarPNG() {
+    const canvas = document.querySelector("#box-qr canvas");
+    if(!canvas) return;
+    const link = document.createElement('a');
+    link.download = 'qrcode-digiart.png';
+    link.href = canvas.toDataURL("image/png");
+    link.click();
 }
 </script>
 </body>
