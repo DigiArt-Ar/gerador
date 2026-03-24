@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cofre DigiArt AR - Painel de Controle</title>
+    <title>Painel DigiArt AR - Central de Comando</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -23,7 +23,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 850px;
             margin: 0 auto;
             background: var(--branco);
             padding: 30px;
@@ -38,17 +38,165 @@
             margin-bottom: 30px;
         }
 
-        header h1 { color: var(--azul-digiart); margin: 0; font-size: 28px; }
-        header span { color: var(--azul-claro); font-weight: bold; }
+        header h1 { color: var(--azul-digiart); margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; }
+        header span { color: var(--azul-claro); }
 
         .secao {
             background: #fff;
             padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+            border: 1px solid #eee;
+            border-radius: 12px;
             margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
 
-        h3 { color: var(--azul-digiart); margin-top: 0; border-left: 4px solid var(--azul-claro); padding-left: 10px; }
+        h3 { color: var(--azul-digiart); margin-top: 0; border-left: 5px solid var(--azul-claro); padding-left: 15px; margin-bottom: 20px; }
 
-        /* Estilo do Gerador
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus { border-color: var(--azul-digiart); }
+
+        .btn-gerar {
+            background: var(--azul-digiart);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .btn-gerar:hover { background: var(--azul-claro); }
+
+        #qrcode-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fafafa;
+            border: 2px dashed #bbb;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #qrcode img {
+            border: 8px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .btn-link {
+            display: block;
+            padding: 18px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn-link:hover { opacity: 0.85; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>DigiArt <span>AR</span></h1>
+        <p>Sistema de Gerenciamento de Conteúdo</p>
+    </header>
+
+    <div class="secao">
+        <h3>Gerar QR Code de Acesso</h3>
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="Cole o link do GitHub Pages aqui...">
+            <button class="btn-gerar" onclick="gerarQR()">GERAR ✨</button>
+        </div>
+        
+        <div id="qrcode-box">
+            <div id="qrcode"></div>
+            <p id="msg-ajuda" style="margin-top:15px; color:#888; font-size: 14px;">O QR aparecerá aqui após clicar em Gerar.</p>
+        </div>
+    </div>
+
+    <div class="secao">
+        <h3>Códigos do Cofre</h3>
+        <div class="links-grid">
+            <a href="#" class="btn-link" style="background: #E91E63;">Código Rosa (Afetivo)</a>
+            <a href="#" class="btn-link" style="background: #0047AB;">Código Azul (Marca)</a>
+            <a href="#" class="btn-link" style="background: #2E7D32;">Código Verde (Universal)</a>
+        </div>
+    </div>
+
+    <div class="secao">
+        <h3>Ferramentas Externas</h3>
+        <div class="links-grid">
+            <a href="https://hiukim.github.io/mind-ar-js-doc/tools/compile/" target="_blank" class="btn-link" style="background: #444;">Compilar .MIND (Web)</a>
+            <a href="#" class="btn-link" style="background: #666;">Gerador Offline (Local)</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function gerarQR() {
+        const link = document.getElementById("urlInput").value;
+        const qrcodeDiv = document.getElementById("qrcode");
+        const msgAjuda = document.getElementById("msg-ajuda");
+
+        if (!link) {
+            alert("Por favor, insira um link primeiro!");
+            return;
+        }
+
+        // Limpa QR anterior
+        qrcodeDiv.innerHTML = "";
+
+        try {
+            // Cria o novo QR Code
+            new QRCode(qrcodeDiv, {
+                text: link,
+                width: 220,
+                height: 220,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            
+            msgAjuda.innerHTML = "<strong>SUCESSO!</strong> Clique com o botão direito na imagem acima para salvar.";
+            msgAjuda.style.color = "#2E7D32";
+        } catch (e) {
+            alert("Erro ao gerar QR Code. Verifique sua conexão com a internet.");
+            console.error(e);
+        }
+    }
+</script>
+
+</body>
+</html>
