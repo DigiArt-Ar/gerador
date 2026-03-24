@@ -2,140 +2,123 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão DigiArt AR</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-
+    <title>Gerador DigiArt AR - Sincronização e Renovação</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root { --azul: #1A3C5E; --dourado: #FFD700; --fundo: #E6F0F5; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--fundo); margin: 0; padding: 20px; color: #333; }
-        h1 { text-align: center; color: var(--azul); margin-bottom: 30px; font-weight: 800; }
-
-        .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 1200px; margin: 0 auto; }
-
-        .card-sistema {
-            background: #fff; border-radius: 15px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-top: 6px solid var(--azul); flex: 1 1 450px; min-width: 300px; box-sizing: border-box;
-        }
-
-        .card-sistema h2 { margin-top: 0; font-size: 1.5rem; color: var(--azul); border-bottom: 2px solid var(--dourado); padding-bottom: 10px; margin-bottom: 20px; }
-        .campo-grupo { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: var(--azul); }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        
-        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; }
-
-        .btn-gerar { background-color: var(--dourado); color: var(--azul); }
-        .btn-renovar { background-color: var(--azul); color: white; }
-
-        #status { position: fixed; bottom: 20px; right: 20px; padding: 15px; border-radius: 8px; color: white; display: none; z-index: 100; font-weight: bold; }
-
-        @media (max-width: 600px) { .card-sistema { flex: 1 1 100%; } h1 { font-size: 1.5rem; } }
+        body { font-family: 'Segoe UI', sans-serif; background: #002171; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; flex-direction: column; padding: 20px; }
+        .card { background: white; color: #333; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 450px; margin-bottom: 20px; }
+        h1 { color: #0d47a1; margin-bottom: 5px; font-size: 24px; font-weight: 800; }
+        h2 { color: #ffca28; font-size: 12px; margin-top: 0; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        .campo { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
+        input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; outline: none; }
+        .btn-gerar { background: #2e7d32; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn-renovar { background: #0288d1; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        #status-msg, #status-renova { margin-top: 10px; font-size: 13px; font-weight: bold; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
     </style>
 </head>
 <body>
 
-    <div id="status"></div>
-    <h1>💎 Painel de Controle DigiArt AR</h1>
-
-    <div class="dashboard-container">
-        
-        <section class="card-sistema">
-            <h2>🆕 Gerar Novo Lote</h2>
-            <div class="campo-grupo">
-                <label>Nome do Cliente (Para o registro):</label>
-                <input type="text" id="pastaNome" placeholder="ex: cliente-premium">
-            </div>
-            <div class="campo-grupo">
-                <label>Quantidade de Tokens:</label>
-                <input type="number" id="qtdTokens" value="50">
-            </div>
-            <button class="btn-gerar" onclick="gerarTokens()">Gerar e Somar no Banco</button>
-        </section>
-
-        <section class="card-sistema">
-            <h2>⏳ Renovação de Acesso</h2>
-            <div class="campo-grupo">
-                <label>Token para Renovar:</label>
-                <input type="text" id="tokenRenovar" placeholder="Ex: a1b2c3">
-            </div>
-            <div class="campo-grupo">
-                <label>Dias de Validade:</label>
-                <input type="number" id="validadeDias" value="365">
-            </div>
-            <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
-        </section>
-
+<div class="card">
+    <h1>DIGIART AR</h1>
+    <h2>Gerador de Novos Tokens</h2>
+    <div class="campo">
+        <label>Nome do Cliente:</label>
+        <input type="text" id="cliente" placeholder="Ex: João Silva">
     </div>
+    <div class="campo">
+        <label>Quantidade:</label>
+        <input type="number" id="qtd" value="1" min="1">
+    </div>
+    <button class="btn-gerar" onclick="gerarTudoDiretoNoFirebase()">GERAR E SALVAR (SOMA)</button>
+    <div id="status-msg"></div>
+</div>
 
-    <script>
-        // CONFIGURAÇÃO FIREBASE (Substitua pelos seus dados reais)
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
-            databaseURL: "SUA_DATABASE_URL",
-            projectId: "SEU_PROJECT_ID",
-        };
+<div class="card" style="border-top: 5px solid #0288d1;">
+    <h1>RENOVAÇÃO</h1>
+    <h2>Extender Prazo de Acesso</h2>
+    <div class="campo">
+        <label>Token do Cliente (ex: a1234b):</label>
+        <input type="text" id="tokenRenovar" placeholder="Cole o token aqui">
+    </div>
+    <button class="btn-renovar" onclick="renovarToken()">RENOVAR POR +1 ANO ✨</button>
+    <div id="status-renova"></div>
+</div>
 
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDG-0ErUD35BZTHb9RZ21fFnXcMkX-IlZY",
+    authDomain: "digiart-ar-sistema.firebaseapp.com",
+    databaseURL: "https://digiart-ar-sistema-default-rtdb.firebaseio.com",
+    projectId: "digiart-ar-sistema",
+    storageBucket: "digiart-ar-sistema.firebasestorage.app",
+    messagingSenderId: "497522538079",
+    appId: "1:497522538079:web:6ee88681098324dc28cdea"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-        function mostrarMsg(texto, cor) {
-            const s = document.getElementById('status');
-            s.innerText = texto; s.style.backgroundColor = cor;
-            s.style.display = 'block';
-            setTimeout(() => s.style.display = 'none', 4000);
-        }
+function criarTokenPadrao() {
+    const letras = 'abcdefghijklmnopqrstuvwxyz';
+    const numeros = '0123456789';
+    const l1 = letras.charAt(Math.floor(Math.random() * letras.length));
+    const l2 = letras.charAt(Math.floor(Math.random() * letras.length));
+    let n = ''; for (let i = 0; i < 4; i++) { n += numeros.charAt(Math.floor(Math.random() * numeros.length)); }
+    return (l1 + n + l2).toLowerCase();
+}
 
-        // FUNÇÃO GERAR: Usa .update() para somar na pasta 'tokens'
-        function gerarTokens() {
-            const pastaInfo = document.getElementById('pastaNome').value.trim();
-            const qtd = parseInt(document.getElementById('qtdTokens').value);
+async function gerarTudoDiretoNoFirebase() {
+    const cliente = document.getElementById('cliente').value.trim() || "Geral";
+    const qtd = parseInt(document.getElementById('qtd').value);
+    const statusMsg = document.getElementById('status-msg');
+    const tokensFirebase = {};
+    const dadosExcel = [];
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
 
-            if (!pastaInfo) return mostrarMsg("Digite o nome do cliente!", "#e74c3c");
+    for (let i = 1; i <= qtd; i++) {
+        const oToken = criarTokenPadrao();
+        tokensFirebase[oToken] = { cliente: cliente, status: "disponivel", data_geracao: dataAtual };
+        dadosExcel.push({ "TOKEN": oToken, "CLIENTE": cliente, "DATA": dataAtual });
+    }
 
-            const refGeral = database.ref('tokens'); // Pasta raiz que você criou
-            let novosTokens = {};
+    try {
+        await database.ref('tokens').update(tokensFirebase);
+        const ws = XLSX.utils.json_to_sheet(dadosExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Tokens");
+        XLSX.writeFile(wb, "Tokens_" + cliente + ".xlsx");
+        statusMsg.style.color = "green";
+        statusMsg.innerText = "✅ " + qtd + " tokens salvos!";
+    } catch (e) { statusMsg.innerText = "❌ Erro"; }
+}
 
-            for (let i = 0; i < qtd; i++) {
-                const tokenID = Math.random().toString(36).substring(2, 8);
-                novosTokens[tokenID] = {
-                    pasta: pastaInfo,
-                    status: "disponível",
-                    data_criacao: new Date().toLocaleDateString()
-                };
-            }
+async function renovarToken() {
+    const token = document.getElementById('tokenRenovar').value.trim().toLowerCase();
+    const statusRenova = document.getElementById('status-renova');
+    if (!token) return alert("Digite um token!");
 
-            // O segredo da SOMA: update injeta sem apagar o que já existe
-            refGeral.update(novosTokens)
-                .then(() => mostrarMsg(`${qtd} tokens somados com sucesso!`, "#27ae60"))
-                .catch(e => mostrarMsg("Erro: " + e, "#e74c3c"));
-        }
-
-        // FUNÇÃO RENOVAR: Busca o token dentro da pasta 'tokens'
-        function renovarToken() {
-            const token = document.getElementById('tokenRenovar').value.trim();
-            const dias = document.getElementById('validadeDias').value;
-
-            if (!token) return mostrarMsg("Digite o token!", "#e74c3c");
-
-            const refToken = database.ref('tokens/' + token);
-
-            refToken.once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    refToken.update({
-                        status: "disponível",
-                        validade: dias + " dias",
-                        renovado_em: new Date().toLocaleDateString()
-                    })
-                    .then(() => mostrarMsg("Token renovado com sucesso!", "#27ae60"))
-                    .catch(() => mostrarMsg("Erro na renovação!", "#e74c3c"));
-                } else {
-                    mostrarMsg("Token não encontrado!", "#e74c3c");
-                }
+    try {
+        const ref = database.ref('tokens/' + token);
+        const snapshot = await ref.once('value');
+        
+        if (snapshot.exists()) {
+            await ref.update({
+                status: "disponivel", // Volta a ficar disponível para o primeiro uso do novo ciclo
+                data_ativacao: null,   // Reseta a ativação antiga
+                data_renovacao: new Date().toLocaleDateString('pt-BR')
             });
+            statusRenova.style.color = "#0288d1";
+            statusRenova.innerText = "🚀 Token " + token + " renovado com sucesso!";
+            document.getElementById('tokenRenovar').value = "";
+        } else {
+            statusRenova.style.color = "red";
+            statusRenova.innerText = "❌ Token não encontrado!";
         }
-    </script>
+    } catch (e) { statusRenova.innerText = "⚠️ Erro na renovação."; }
+}
+</script>
 </body>
 </html>
