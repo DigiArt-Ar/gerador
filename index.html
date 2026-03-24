@@ -3,146 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Gestão - DigiArt AR</title>
+    <title>Painel DigiArt AR - Gestão</title>
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <style>
-        :root { --azul: #1A3C5E; --claro: #4F93BF; --ouro: #FFD700; --fundo: #E6F0F5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); padding: 20px; }
-        h1 { text-align: center; color: var(--azul); font-weight: 800; }
-        .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 1300px; margin: 0 auto; }
-        .card-sistema { 
-            background: white; border-radius: 20px; padding: 25px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); 
-            flex: 1 1 350px; min-width: 300px;
+        /* Estilo Base */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+
+        /* CONTAINER RESPONSIVO (O segredo do Lado a Lado) */
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap; /* Permite quebrar linha no celular */
+            gap: 20px; /* Espaço entre os cards */
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .card-sistema h2 { border-bottom: 3px solid var(--ouro); padding-bottom: 10px; color: var(--azul); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
-        .btn-gerar { background: var(--ouro); color: var(--azul); }
-        .btn-renovar { background: var(--claro); color: white; }
-        .btn-qr { background: #000; color: white; }
-        #res-qr { margin-top: 15px; display: none; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 10px; }
-        #box-qr { display: flex; justify-content: center; margin-bottom: 10px; }
-        #statusMessage { position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 8px; color: white; display: none; z-index: 1000; }
+
+        /* CARDS (Painéis) */
+        .card-sistema {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 5px solid #ffd700; /* Dourado DigiArt */
+            
+            /* No PC: Ocupa quase metade da tela (ajustando o gap) */
+            flex: 1 1 450px; 
+            min-width: 300px;
+            box-sizing: border-box;
+        }
+
+        /* Ajustes de Input e Botão */
+        .card-sistema h2 { margin-top: 0; font-size: 1.5rem; color: #444; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .campo-grupo { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        button { 
+            width: 100%; padding: 15px; border: none; border-radius: 8px; 
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-gerar { background-color: #27ae60; color: white; }
+        .btn-gerar:hover { background-color: #219150; }
+        .btn-renovar { background-color: #2980b9; color: white; }
+        .btn-renovar:hover { background-color: #1f6391; }
+
+        /* MEDIA QUERY: Ajustes finos para telas muito pequenas */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .card-sistema { padding: 15px; flex: 1 1 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="statusMessage"></div>
-    <h1>💎 Painel DigiArt AR</h1>
+    <h1>💎 Painel de Controle DigiArt AR</h1>
 
     <div class="dashboard-container">
+        
         <section class="card-sistema">
-            <h2>🆕 Criar Novo Lote</h2>
-            <input type="text" id="pastaNome" placeholder="Nome da Pasta">
-            <input type="number" id="qtdTokens" value="50">
-            <button class="btn-gerar" onclick="gerarTokens()">Gerar e Somar no Banco</button>
-        </section>
-
-        <section class="card-sistema">
-            <h2>⏳ Renovar Acesso</h2>
-            <input type="text" id="tokenRenovar" placeholder="Token do Cliente">
-            <input type="number" id="validadeDias" value="365">
-            <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
-        </section>
-
-        <section class="card-sistema">
-            <h2>📱 QR Code PNG</h2>
-            <input type="text" id="urlInput" placeholder="Link do GitHub">
-            <button class="btn-qr" onclick="gerarQR()">Criar QR Code ✨</button>
-            <div id="res-qr">
-                <div id="box-qr"></div>
-                <button onclick="baixarPNG()" style="background:#27ae60; color:white; font-size:11px;">📥 BAIXAR PNG</button>
+            <h2>🆕 Novo Lote</h2>
+            <div class="campo-grupo">
+                <label>Nome da Pasta (Cliente):</label>
+                <input type="text" id="pastaNome" placeholder="ex: cliente-joao">
             </div>
+            <div class="campo-grupo">
+                <label>Quantidade de Tokens:</label>
+                <input type="number" id="qtdTokens" value="50">
+            </div>
+            <button class="btn-gerar" onclick="gerarTokens()">Gerar Tokens e Sincronizar</button>
         </section>
+
+        <section class="card-sistema">
+            <h2>⏳ Renovação</h2>
+            <div class="campo-grupo">
+                <label>Token do Cliente:</label>
+                <input type="text" id="tokenRenovar" placeholder="Digite o token para resetar">
+            </div>
+            <div class="campo-grupo">
+                <label>Nova Validade:</label>
+                <input type="text" value="+365 Dias" disabled>
+            </div>
+            <button class="btn-renovar" onclick="renovarToken()">Renovar Acesso Agora</button>
+        </section>
+
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (Coloque as suas chaves aqui)
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
-            authDomain: "digiart-ar.firebaseapp.com",
-            databaseURL: "https://digiart-ar-default-rtdb.firebaseio.com",
-            projectId: "digiart-ar",
-            storageBucket: "digiart-ar.appspot.com",
-            messagingSenderId: "338865612260",
-            appId: "1:338865612260:web:..."
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        function showStatus(msg, tipo) {
-            const s = document.getElementById('statusMessage');
-            s.innerText = msg;
-            s.style.background = tipo === "success" ? "#27ae60" : "#e74c3c";
-            s.style.display = "block";
-            setTimeout(() => { s.style.display = "none"; }, 4000);
-        }
-
-        // --- SUA LÓGICA DE GERAR (Merge) ---
-        async function gerarTokens() {
-            const pasta = document.getElementById('pastaNome').value.trim();
-            const qtd = parseInt(document.getElementById('qtdTokens').value);
-            if (!pasta) { showStatus("Digite o nome da pasta!", "error"); return; }
-
-            const dbRef = database.ref('tokens');
-            const snapshot = await dbRef.once('value');
-            let tokensAtuais = snapshot.val() || {};
-
-            for (let i = 0; i < qtd; i++) {
-                const novoToken = Math.random().toString(36).substring(2, 8).toUpperCase();
-                tokensAtuais[novoToken] = {
-                    pasta: pasta,
-                    status: "disponivel",
-                    data_criacao: new Date().toISOString()
-                };
-            }
-
-            dbRef.set(tokensAtuais)
-                .then(() => showStatus(`${qtd} tokens gerados!`, "success"))
-                .catch((e) => showStatus("Erro: " + e, "error"));
-        }
-
-        // --- SUA LÓGICA DE RENOVAR ---
-        function renovarToken() {
-            const token = document.getElementById('tokenRenovar').value.trim();
-            const dias = parseInt(document.getElementById('validadeDias').value);
-            if (!token) return;
-
-            const tokenRef = database.ref(`tokens/${token}`);
-            tokenRef.once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    tokenRef.update({
-                        status: "disponivel",
-                        validade_dias: dias,
-                        data_renovacao: new Date().toISOString()
-                    }).then(() => showStatus(`Token ${token} renovado!`, "success"));
-                } else {
-                    showStatus("Token não encontrado!", "error");
-                }
-            });
-        }
-
-        // --- LÓGICA DO QR CODE (Independente) ---
-        function gerarQR() {
-            const link = document.getElementById("urlInput").value;
-            if(!link) return;
-            document.getElementById("box-qr").innerHTML = "";
-            document.getElementById("res-qr").style.display = "block";
-            new QRCode(document.getElementById("box-qr"), { text: link, width: 180, height: 180, colorDark: "#000" });
-        }
-
-        function baixarPNG() {
-            const canvas = document.querySelector("#box-qr canvas");
-            const a = document.createElement("a");
-            a.href = canvas.toDataURL("image/png");
-            a.download = 'qrcode-digiart.png';
-            a.click();
-        }
+        // Aqui entra sua configuração do Firebase...
+        // Aqui entra a função gerarTokens() com a lógica de SOMA...
+        // Aqui entra a função renovarToken()...
     </script>
+
 </body>
 </html>
