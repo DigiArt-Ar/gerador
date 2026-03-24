@@ -8,8 +8,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-svg@1.1.0/dist/qrcode-svg.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-svg@1.1.0/dist/qrcode-svg.min.js"></script>
 
     <style>
         :root {
@@ -48,7 +48,7 @@
             flex-wrap: wrap; 
             gap: 25px; 
             justify-content: center;
-            max-width: 1300px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -121,6 +121,7 @@
         }
         
         #qrcode-view { display: flex; justify-content: center; margin-bottom: 20px; }
+        /* O Canvas do navegador agora gera em PRETO */
         #qrcode-view canvas { border: 5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         .botoes-download {
@@ -191,7 +192,7 @@
             <div id="resultado-qr">
                 <div id="qrcode-view"></div>
                 
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Download do QR Code:</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Download do QR Code (PRETO PADRÃO):</p>
                 <div class="botoes-download">
                     <button class="btn-down" style="background:#444" onclick="downloadSVG()">📥 SVG (Vetor)</button>
                     <button class="btn-down" style="background:#2E7D32" onclick="downloadPNG()">📥 PNG (Imagem)</button>
@@ -202,76 +203,4 @@
     </div>
 
     <script>
-        // ... (Configuração do Firebase - Mantenha a sua aqui) ...
-
-        let currentQR; // Armazena o objeto QR para download
-
-        // FUNÇÃO DE GERAÇÃO E VISUALIZAÇÃO
-        function gerarEVisualizarQR() {
-            const link = document.getElementById("urlInput").value;
-            const view = document.getElementById("qrcode-view");
-            const resultadoBox = document.getElementById("resultado-qr");
-            
-            if(!link.trim()) { alert("Por favor, cole um link!"); return; }
-
-            // Limpa o visualizador
-            view.innerHTML = "";
-            resultadoBox.style.display = "block";
-
-            // 1. Gera o visual do navegador (PNG em Canvas)
-            new QRCode(view, {
-                text: link,
-                width: 180,
-                height: 180,
-                colorDark : "#1A3C5E",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            // 2. Cria o objeto vetorial SVG (para download)
-            currentQR = new QRCodeSVG({
-                text: link,
-                width: 500, // Resolução alta para download
-                height: 500,
-                color : "#1A3C5E",
-                background : "#ffffff",
-                ecl : "H"
-            });
-        }
-
-        // FUNÇÃO DE DOWNLOAD SVG (Vetor)
-        function downloadSVG() {
-            if(!currentQR) return;
-            const svgOutput = currentQR.toString();
-            const blob = new Blob([svgOutput], {type: "image/svg+xml;charset=utf-8"});
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "digiart_ar_qrcode.svg";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        // FUNÇÃO DE DOWNLOAD PNG (Imagem)
-        function downloadPNG() {
-            const canvas = document.querySelector("#qrcode-view canvas");
-            if(!canvas) return;
-            const url = canvas.toDataURL("image/png");
-            
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "digiart_ar_qrcode.png";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        // --- MANTENHA SUAS FUNÇÕES ORIGINAIS DO FIREBASE AQUI ---
-        function gerarTokens() { console.log("Lógica original..."); }
-        function renovarToken() { console.log("Lógica original..."); }
-    </script>
-
-</body>
-</html>
+        // ...
