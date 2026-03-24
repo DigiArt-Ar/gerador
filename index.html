@@ -3,155 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DigiArt AR - Gestão Total</title>
+    <title>Painel Gestão - DigiArt AR</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        :root {
-            --azul-escuro: #1A3C5E; --azul-claro: #4F93BF;
-            --dourado: #FFD700; --fundo: #F0F4F7; --sucesso: #27ae60;
+        :root { --azul: #1A3C5E; --claro: #4F93BF; --ouro: #FFD700; --fundo: #E6F0F5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); padding: 20px; }
+        h1 { text-align: center; color: var(--azul); font-weight: 800; }
+        .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 1300px; margin: 0 auto; }
+        .card-sistema { 
+            background: white; border-radius: 20px; padding: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); 
+            flex: 1 1 350px; min-width: 300px;
         }
-
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background-color: var(--fundo); margin: 0; padding: 20px; color: #333; 
-        }
-
-        h1 { text-align: center; color: var(--azul-escuro); font-weight: 800; margin-bottom: 5px; }
-        .subtitulo { text-align: center; color: var(--azul-claro); margin-bottom: 30px; font-size: 0.9rem; }
-
-        /* Grid de 3 Colunas */
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px; max-width: 1300px; margin: 0 auto;
-        }
-
-        .card {
-            background: white; border-radius: 15px; padding: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            border-top: 5px solid var(--azul-escuro);
-            display: flex; flex-direction: column;
-        }
-
-        .card h2 { 
-            font-size: 1.2rem; color: var(--azul-escuro); 
-            margin-top: 0; border-bottom: 2px solid var(--dourado); 
-            padding-bottom: 10px; margin-bottom: 20px;
-        }
-
-        .grupo { margin-bottom: 15px; }
-        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #555; }
-        
-        input { 
-            width: 100%; padding: 12px; border: 1px solid #D1E1EB; 
-            border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; 
-        }
-
-        button { 
-            width: 100%; padding: 14px; border: none; border-radius: 8px; 
-            font-weight: 800; cursor: pointer; transition: 0.3s; 
-            text-transform: uppercase; font-size: 0.9rem;
-        }
-
-        .btn-gerar { background: var(--dourado); color: var(--azul-escuro); }
-        .btn-renovar { background: var(--azul-claro); color: white; }
+        .card-sistema h2 { border-bottom: 3px solid var(--ouro); padding-bottom: 10px; color: var(--azul); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        .btn-gerar { background: var(--ouro); color: var(--azul); }
+        .btn-renovar { background: var(--claro); color: white; }
         .btn-qr { background: #000; color: white; }
-        
-        /* Área do QR Code */
-        #res-qr { 
-            margin-top: 15px; padding: 10px; background: #f9f9f9; 
-            border-radius: 10px; display: none; text-align: center; 
-        }
+        #res-qr { margin-top: 15px; display: none; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 10px; }
         #box-qr { display: flex; justify-content: center; margin-bottom: 10px; }
-        .btn-png { background: var(--sucesso); color: white; padding: 8px; font-size: 0.75rem; }
-
-        /* Toast de Status */
-        #status {
-            position: fixed; bottom: 20px; right: 20px; padding: 15px 25px;
-            border-radius: 10px; color: white; font-weight: bold; display: none; z-index: 1000;
-        }
+        #statusMessage { position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 8px; color: white; display: none; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <div id="status"></div>
-
+    <div id="statusMessage"></div>
     <h1>💎 Painel DigiArt AR</h1>
-    <p class="subtitulo">Controle de Tokens, Renovação e QR Code</p>
 
-    <div class="dashboard">
-        
-        <section class="card">
-            <h2>🆕 Novos Tokens</h2>
-            <div class="grupo">
-                <label>Nome do Cliente / Pasta:</label>
-                <input type="text" id="pastaNome" placeholder="ex: cliente-premium">
-            </div>
-            <div class="grupo">
-                <label>Quantidade:</label>
-                <input type="number" id="qtdTokens" value="10">
-            </div>
+    <div class="dashboard-container">
+        <section class="card-sistema">
+            <h2>🆕 Criar Novo Lote</h2>
+            <input type="text" id="pastaNome" placeholder="Nome da Pasta">
+            <input type="number" id="qtdTokens" value="50">
             <button class="btn-gerar" onclick="gerarTokens()">Gerar e Somar no Banco</button>
         </section>
 
-        <section class="card">
+        <section class="card-sistema">
             <h2>⏳ Renovar Acesso</h2>
-            <div class="grupo">
-                <label>Token do Cliente:</label>
-                <input type="text" id="tokenRenovar" placeholder="Digite o token">
-            </div>
-            <div class="grupo">
-                <label>Dias de Validade:</label>
-                <input type="number" id="validadeDias" value="365">
-            </div>
+            <input type="text" id="tokenRenovar" placeholder="Token do Cliente">
+            <input type="number" id="validadeDias" value="365">
             <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
         </section>
 
-        <section class="card">
-            <h2>📱 Gerador de QR</h2>
-            <div class="grupo">
-                <label>Link de Destino:</label>
-                <input type="text" id="urlInput" placeholder="Link do seu GitHub Pages">
-            </div>
-            <button class="btn-qr" onclick="criarQR()">Gerar QR Code ✨</button>
+        <section class="card-sistema">
+            <h2>📱 QR Code PNG</h2>
+            <input type="text" id="urlInput" placeholder="Link do GitHub">
+            <button class="btn-qr" onclick="gerarQR()">Criar QR Code ✨</button>
             <div id="res-qr">
                 <div id="box-qr"></div>
-                <button class="btn-png" onclick="baixarPNG()">📥 BAIXAR PNG</button>
+                <button onclick="baixarPNG()" style="background:#27ae60; color:white; font-size:11px;">📥 BAIXAR PNG</button>
             </div>
         </section>
-
     </div>
 
     <script>
-        // ---------------------------------------------------------
-        // COLE SUAS CHAVES DO FIREBASE AQUI ABAIXO
-        // ---------------------------------------------------------
+        // CONFIGURAÇÃO DO FIREBASE (Coloque as suas chaves aqui)
         const firebaseConfig = {
             apiKey: "SUA_API_KEY",
-            authDomain: "SEU_DOMINIO.firebaseapp.com",
-            databaseURL: "SUA_URL_DO_BANCO",
-            projectId: "SEU_PROJETO",
-            storageBucket: "SEU_BUCKET.appspot.com",
-            messagingSenderId: "SEU_ID",
-            appId: "SEU_APP_ID"
+            authDomain: "digiart-ar.firebaseapp.com",
+            databaseURL: "https://digiart-ar-default-rtdb.firebaseio.com",
+            projectId: "digiart-ar",
+            storageBucket: "digiart-ar.appspot.com",
+            messagingSenderId: "338865612260",
+            appId: "1:338865612260:web:..."
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // FUNÇÃO STATUS (Aviso na tela)
         function showStatus(msg, tipo) {
-            const s = document.getElementById('status');
+            const s = document.getElementById('statusMessage');
             s.innerText = msg;
             s.style.background = tipo === "success" ? "#27ae60" : "#e74c3c";
             s.style.display = "block";
             setTimeout(() => { s.style.display = "none"; }, 4000);
         }
 
-        // 1. SUA FUNÇÃO ORIGINAL: GERAR TOKENS (MERGE)
+        // --- SUA LÓGICA DE GERAR (Merge) ---
         async function gerarTokens() {
             const pasta = document.getElementById('pastaNome').value.trim();
             const qtd = parseInt(document.getElementById('qtdTokens').value);
@@ -171,15 +103,15 @@
             }
 
             dbRef.set(tokensAtuais)
-                .then(() => showStatus(`${qtd} tokens gerados para ${pasta}!`, "success"))
+                .then(() => showStatus(`${qtd} tokens gerados!`, "success"))
                 .catch((e) => showStatus("Erro: " + e, "error"));
         }
 
-        // 2. SUA FUNÇÃO ORIGINAL: RENOVAR
+        // --- SUA LÓGICA DE RENOVAR ---
         function renovarToken() {
             const token = document.getElementById('tokenRenovar').value.trim();
             const dias = parseInt(document.getElementById('validadeDias').value);
-            if (!token) { showStatus("Digite o token!", "error"); return; }
+            if (!token) return;
 
             const tokenRef = database.ref(`tokens/${token}`);
             tokenRef.once('value', (snapshot) => {
@@ -188,21 +120,20 @@
                         status: "disponivel",
                         validade_dias: dias,
                         data_renovacao: new Date().toISOString()
-                    }).then(() => showStatus(`Token ${token} renovado por ${dias} dias!`, "success"));
+                    }).then(() => showStatus(`Token ${token} renovado!`, "success"));
                 } else {
                     showStatus("Token não encontrado!", "error");
                 }
             });
         }
 
-        // 3. FUNÇÕES DO QR CODE
-        function criarQR() {
+        // --- LÓGICA DO QR CODE (Independente) ---
+        function gerarQR() {
             const link = document.getElementById("urlInput").value;
-            const box = document.getElementById("box-qr");
-            if(!link) { showStatus("Insira o link!", "error"); return; }
-            box.innerHTML = "";
+            if(!link) return;
+            document.getElementById("box-qr").innerHTML = "";
             document.getElementById("res-qr").style.display = "block";
-            new QRCode(box, { text: link, width: 180, height: 180, colorDark: "#000" });
+            new QRCode(document.getElementById("box-qr"), { text: link, width: 180, height: 180, colorDark: "#000" });
         }
 
         function baixarPNG() {
