@@ -7,85 +7,157 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
+        /* DEFINIÇÃO DE CORES DIGIART (Baseado no seu logo) */
         :root {
-            --azul-escuro: #1A3C5E;
-            --azul-claro: #4F93BF;
-            --dourado: #FFD700;
-            --dourado-escuro: #B8860B;
-            --fundo: #E6F0F5;
+            --azul-escuro: #1A3C5E; /* Base do ícone */
+            --azul-claro: #4F93BF; /* Brilho e anel */
+            --dourado: #FFD700; /* Destaque para CTAs */
+            --dourado-escuro: #B8860B; /* Para hover */
+            --fundo: #E6F0F5; /* Fundo suave */
         }
 
+        /* Estilo Base */
         body { 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--fundo); 
-            margin: 0; padding: 20px; color: #333; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
         }
 
-        h1 { text-align: center; color: var(--azul-escuro); margin-bottom: 10px; font-size: 2.2rem; font-weight: 800; }
-        .subtitulo { text-align: center; color: var(--azul-claro); margin-bottom: 40px; font-weight: 400; }
+        h1 { 
+            text-align: center; 
+            color: var(--azul-escuro); 
+            margin-bottom: 10px; 
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
 
+        .subtitulo {
+            text-align: center;
+            color: var(--azul-claro);
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        /* CONTAINER RESPONSIVO (Lado a Lado / Empilhado) */
         .dashboard-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* Segredo da responsividade: quebra linha se não couber */
             gap: 25px; 
             justify-content: center;
-            max-width: 1400px; /* Aumentado para 3 colunas */
+            max-width: 1200px;
             margin: 0 auto;
         }
 
+        /* CARDS (Painéis) - Com degradê sutil do azul escuro para o claro */
         .card-sistema {
             background: linear-gradient(135deg, #fff 60%, var(--fundo) 100%);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 15px 35px rgba(26, 60, 94, 0.15);
+            box-shadow: 0 15px 35px rgba(26, 60, 94, 0.15); /* Sombra azulada */
             border-top: 8px solid var(--azul-escuro); 
-            flex: 1 1 350px; /* Ajustado para 3 colunas */
-            min-width: 300px;
+            
+            /* Lógica Flex: Tenta ter 500px, cresce se puder, quebra se < 500px */
+            flex: 1 1 500px; 
+            min-width: 300px; /* Não deixa ficar espremido demais */
             box-sizing: border-box;
             transition: transform 0.2s ease-in-out;
         }
 
+        /* Destaque dourado no título do cartão */
         .card-sistema h2 { 
-            margin-top: 0; font-size: 1.6rem; color: var(--azul-escuro); 
-            border-bottom: 3px solid var(--dourado); padding-bottom: 15px; margin-bottom: 25px;
+            margin-top: 0; 
+            font-size: 1.6rem; 
+            color: var(--azul-escuro); 
+            border-bottom: 3px solid var(--dourado); 
+            padding-bottom: 15px; 
+            margin-bottom: 25px;
         }
 
+        /* Ajustes de Input */
         .campo-grupo { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95rem; color: var(--azul-escuro); }
         
         input { 
-            width: 100%; padding: 14px; border: 2px solid #D1E1EB; 
-            border-radius: 10px; box-sizing: border-box; font-size: 1rem; 
-            transition: 0.2s; background-color: #FBFDFF;
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #D1E1EB; /* Borda levemente azulada */
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 1rem; 
+            transition: 0.2s;
+            background-color: #FBFDFF;
         }
 
+        input:focus {
+            outline: none;
+            border-color: var(--azul-claro);
+            box-shadow: 0 0 10px rgba(79, 147, 191, 0.2);
+        }
+
+        /* Campo de Validade (Agora Habilitado) */
+        input[type="number"]#validadeDias {
+            font-weight: bold;
+            color: #27ae60; /* Verde para destacar q é tempo */
+        }
+        
+        /* Botões de Ação */
         button { 
-            width: 100%; padding: 16px; border: none; border-radius: 10px; 
-            font-size: 1.1rem; font-weight: 800; cursor: pointer; 
-            transition: 0.3s; margin-top: 15px; text-transform: uppercase;
+            width: 100%; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.3s;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .btn-gerar { background-color: var(--dourado); color: var(--azul-escuro); }
-        .btn-renovar { background-color: var(--azul-claro); color: white; }
-        .btn-qr { background-color: #000; color: white; } /* Botão preto do QR */
-
-        /* Estilo do Resultado do QR */
-        #resultado-qr {
-            margin-top: 20px; padding: 15px; background: #fff;
-            border: 2px dashed var(--azul-claro); border-radius: 15px;
-            text-align: center; display: none;
+        /* Botão Dourado para Criar (Chama atenção) */
+        .btn-gerar { 
+            background-color: var(--dourado); 
+            color: var(--azul-escuro); 
         }
-        #qrcode-view { display: flex; justify-content: center; margin-bottom: 15px; }
-        .btn-down { background-color: #27ae60; color: white; font-size: 0.9rem; margin-top: 5px; }
+        .btn-gerar:hover { 
+            background-color: var(--dourado-escuro); 
+            color: #fff;
+            transform: translateY(-2px);
+        }
 
-        @media (max-width: 600px) { .card-sistema { flex: 1 1 100%; } }
+        /* Botão Azul para Renovação (Padrão DigiArt) */
+        .btn-renovar { 
+            background-color: var(--azul-claro); 
+            color: white; 
+        }
+        .btn-renovar:hover { 
+            background-color: var(--azul-escuro); 
+            transform: translateY(-2px);
+        }
+
+        /* Feedback Visual */
+        #statusMessage {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 8px; color: white;
+            font-weight: bold; display: none; z-index: 1000;
+        }
+
+        /* MEDIA QUERY: Ajustes finos para celulares pequenos */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.8rem; }
+            .card-sistema { padding: 20px; flex: 1 1 100%; }
+        }
     </style>
 </head>
 <body>
+
+    <div id="statusMessage"></div>
 
     <h1>💎 Painel de Controle DigiArt</h1>
     <p class="subtitulo">Gestão Avançada de Realidade Aumentada</p>
@@ -94,103 +166,43 @@
         
         <section class="card-sistema">
             <h2>🆕 Criar Novo Lote</h2>
+            
             <div class="campo-grupo">
-                <label>Nome da Pasta (Cliente):</label>
+                <label>Nome da Pasta (Cliente - ex: joao-fotos):</label>
                 <input type="text" id="pastaNome" placeholder="Ex: nome-do-cliente">
             </div>
+            
             <div class="campo-grupo">
-                <label>Quantidade de Tokens:</label>
-                <input type="number" id="qtdTokens" value="50" min="1">
+                <label>Quantidade de Tokens a Gerar:</label>
+                <input type="number" id="qtdTokens" value="50" min="1" max="500">
             </div>
+            
             <button class="btn-gerar" onclick="gerarTokens()">Gerar Tokens e Sincronizar</button>
         </section>
 
         <section class="card-sistema">
             <h2>⏳ Renovar Acesso</h2>
-            <div class="campo-grupo">
-                <label>Token do Cliente:</label>
-                <input type="text" id="tokenRenovar" placeholder="Digite o token">
-            </div>
-            <div class="campo-grupo">
-                <label>Dias de Acréscimo:</label>
-                <input type="number" id="validadeDias" value="365" min="1">
-            </div>
-            <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
-        </section>
-
-        <section class="card-sistema">
-            <h2>📱 Gerador de QR Code</h2>
-            <div class="campo-grupo">
-                <label>Link do GitHub Pages:</label>
-                <input type="text" id="urlInput" placeholder="https://davidbarcelos.github.io/...">
-            </div>
-            <button class="btn-qr" onclick="gerarEVisualizarQR()">Gerar QR Code ✨</button>
             
-            <div id="resultado-qr">
-                <div id="qrcode-view"></div>
-                <button class="btn-down" onclick="downloadPNG()">📥 BAIXAR QR (PNG)</button>
+            <div class="campo-grupo">
+                <label>Token do Cliente (ex: s1a2b3):</label>
+                <input type="text" id="tokenRenovar" placeholder="Digite o token exato">
             </div>
+            
+            <div class="campo-grupo">
+                <label>Dias de Acréscimo (Editável):</label>
+                <input type="number" id="validadeDias" value="365" min="1" placeholder="Ex: 30, 90, 365">
+            </div>
+            
+            <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
         </section>
 
     </div>
 
     <script>
-        // ============================================================
-        // 1. COLE SUAS CONFIGURAÇÕES DO FIREBASE AQUI ABAIXO
-        // ============================================================
-        /* const firebaseConfig = { ... };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        */
-
-        // ============================================================
-        // 2. FUNÇÃO GERAR TOKENS (COLE SUA LÓGICA DO EXCEL AQUI)
-        // ============================================================
-        function gerarTokens() {
-            // Pegue o código que você já tem que gera o Excel e o Firebase
-            // e cole aqui dentro para ele voltar a funcionar 100%.
-            alert("Lembre-se de colar sua lógica original aqui!");
-        }
-
-        // ============================================================
-        // 3. FUNÇÃO RENOVAR TOKEN (COLE SUA LÓGICA AQUI)
-        // ============================================================
-        function renovarToken() {
-            // Pegue o código que você já tem de renovação e cole aqui.
-            alert("Lembre-se de colar sua lógica original aqui!");
-        }
-
-        // ============================================================
-        // 4. LÓGICA DO QR CODE (JÁ PRONTA E FUNCIONANDO)
-        // ============================================================
-        function gerarEVisualizarQR() {
-            const link = document.getElementById("urlInput").value;
-            const view = document.getElementById("qrcode-view");
-            const box = document.getElementById("resultado-qr");
-            
-            if(!link) { alert("Insira o link!"); return; }
-
-            view.innerHTML = "";
-            box.style.display = "block";
-
-            new QRCode(view, {
-                text: link,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-        }
-
-        function downloadPNG() {
-            const canvas = document.querySelector("#qrcode-view canvas");
-            if(!canvas) return;
-            const link = document.createElement('a');
-            link.download = 'qrcode-digiart.png';
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        }
+        // ... (Configuração do Firebase) ...
+        // ... (Lógica do gerarTokens() com Merge) ...
+        // ... (Lógica do renovarToken()) ...
     </script>
+
 </body>
 </html>
