@@ -3,78 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DigiArt AR - Central</title>
+    <title>Painel Gestão - DigiArt AR</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-svg@1.1.0/dist/qrcode-svg.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
-        :root { --azul: #0047AB; --claro: #00BFFF; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: var(--azul); margin-bottom: 5px; font-size: 24px; }
-        h1 span { color: var(--claro); }
-        .instrucao { color: #666; font-size: 14px; margin-bottom: 25px; }
+        :root {
+            --azul-escuro: #1A3C5E; 
+            --azul-claro: #4F93BF; 
+            --dourado: #FFD700; 
+            --dourado-escuro: #B8860B; 
+            --fundo: #E6F0F5; 
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--fundo); 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+        }
+
+        h1 { 
+            text-align: center; 
+            color: var(--azul-escuro); 
+            margin-bottom: 10px; 
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: var(--azul-claro);
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 25px; 
+            justify-content: center;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .card-sistema {
+            background: linear-gradient(135deg, #fff 60%, var(--fundo) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(26, 60, 94, 0.15); 
+            border-top: 8px solid var(--azul-escuro); 
+            flex: 1 1 380px; 
+            min-width: 320px; 
+            box-sizing: border-box;
+            transition: transform 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-sistema h2 { 
+            margin-top: 0; 
+            font-size: 1.6rem; 
+            color: var(--azul-escuro); 
+            border-bottom: 3px solid var(--dourado); 
+            padding-bottom: 15px; 
+            margin-bottom: 25px;
+        }
+
+        .campo-grupo { margin-bottom: 18px; flex-grow: 1; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95rem; color: var(--azul-escuro); }
         
-        .campo-grupo { margin-bottom: 20px; }
-        input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--azul); }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #D1E1EB; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 1rem; 
+            transition: 0.2s;
+            background-color: #FBFDFF;
+        }
+
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.3s;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-gerar { background-color: var(--dourado); color: var(--azul-escuro); }
+        .btn-gerar:hover { background-color: var(--dourado-escuro); color: #fff; transform: translateY(-2px); }
+
+        .btn-renovar { background-color: var(--azul-claro); color: white; }
+        .btn-renovar:hover { background-color: var(--azul-escuro); transform: translateY(-2px); }
+
+        /* Estilos do NOVO Gerador de QR */
+        #resultado-qr {
+            margin-top: 25px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 15px;
+            border: 2px dashed #ccc;
+            text-align: center;
+            display: none; /* Escondido até gerar */
+        }
         
-        .btn { width: 100%; padding: 15px; background: var(--azul); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        .btn:hover { background: var(--claro); transform: translateY(-2px); }
+        #qrcode-view { display: flex; justify-content: center; margin-bottom: 20px; }
+        #qrcode-view canvas { border: 5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        #area-qr { margin-top: 25px; padding: 20px; background: #fafafa; border: 2px dashed #ccc; border-radius: 15px; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative; }
-        canvas { max-width: 100%; height: auto !important; border: 5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .botoes-download {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
         
-        .setor-botoes { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-mini { padding: 10px; font-size: 12px; text-decoration: none; color: white; border-radius: 5px; font-weight: bold; }
+        .btn-down {
+            padding: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            color: white;
+        }
+        
+        .btn-down:hover { transform: scale(1.05); }
+
+        @media (max-width: 800px) { .card-sistema { flex: 1 1 100%; } }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>DigiArt <span>AR</span></h1>
-    <p class="instrucao">Gerador de QR Code Offline</p>
+    <h1>💎 Painel de Controle DigiArt</h1>
+    <p class="subtitulo">Gestão Avançada de Realidade Aumentada</p>
 
-    <div class="campo-grupo">
-        <input type="text" id="link" placeholder="Cole o link do seu projeto aqui...">
+    <div class="dashboard-container">
+        
+        <section class="card-sistema">
+            <h2>🆕 Criar Novo Lote</h2>
+            <div class="campo-grupo">
+                <label>Nome da Pasta (Cliente):</label>
+                <input type="text" id="pastaNome" placeholder="Ex: nome-do-cliente">
+            </div>
+            <div class="campo-grupo">
+                <label>Quantidade de Tokens:</label>
+                <input type="number" id="qtdTokens" value="50" min="1">
+            </div>
+            <button class="btn-gerar" onclick="gerarTokens()">Gerar Tokens e Sincronizar</button>
+        </section>
+
+        <section class="card-sistema">
+            <h2>⏳ Renovar Acesso</h2>
+            <div class="campo-grupo">
+                <label>Token do Cliente:</label>
+                <input type="text" id="tokenRenovar" placeholder="Digite o token">
+            </div>
+            <div class="campo-grupo">
+                <label>Dias de Acréscimo:</label>
+                <input type="number" id="validadeDias" value="365">
+            </div>
+            <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
+        </section>
+
+        <section class="card-sistema">
+            <h2>📱 Gerador de QR Code</h2>
+            <div class="campo-grupo">
+                <label>Link do GitHub Pages:</label>
+                <input type="text" id="urlInput" placeholder="https://davidbarcelos.github.io/...">
+            </div>
+            <button class="btn-gerar" onclick="gerarEVisualizarQR()" style="background-color: var(--azul-escuro); color: white;">Gerar QR Code ✨</button>
+            
+            <div id="resultado-qr">
+                <div id="qrcode-view"></div>
+                
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Download do QR Code:</p>
+                <div class="botoes-download">
+                    <button class="btn-down" style="background:#444" onclick="downloadSVG()">📥 SVG (Vetor)</button>
+                    <button class="btn-down" style="background:#2E7D32" onclick="downloadPNG()">📥 PNG (Imagem)</button>
+                </div>
+            </div>
+        </section>
+
     </div>
-    
-    <button class="btn" onclick="gerar()">GERAR QR CODE ✨</button>
 
-    <div id="area-qr">
-        <canvas id="canvas"></canvas>
-    </div>
+    <script>
+        // ... (Configuração do Firebase - Mantenha a sua aqui) ...
 
-    <p id="msg" style="display:none; color: green; font-weight: bold; margin-top: 10px;">QR Gerado! Clique com o botão direito para salvar.</p>
+        let currentQR; // Armazena o objeto QR para download
 
-    <div class="setor-botoes">
-        <div class="btn-mini" style="background:#E91E63">Cofre Rosa</div>
-        <div class="btn-mini" style="background:#0047AB">Cofre Azul</div>
-        <div class="btn-mini" style="background:#2E7D32">Cofre Verde</div>
-        <div class="btn-mini" style="background:#444">Compilar .MIND</div>
-    </div>
-</div>
+        // FUNÇÃO DE GERAÇÃO E VISUALIZAÇÃO
+        function gerarEVisualizarQR() {
+            const link = document.getElementById("urlInput").value;
+            const view = document.getElementById("qrcode-view");
+            const resultadoBox = document.getElementById("resultado-qr");
+            
+            if(!link.trim()) { alert("Por favor, cole um link!"); return; }
 
-<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+            // Limpa o visualizador
+            view.innerHTML = "";
+            resultadoBox.style.display = "block";
 
-<script>
-    function gerar() {
-        const link = document.getElementById('link').value;
-        if(!link) { alert("Cole o link primeiro!"); return; }
+            // 1. Gera o visual do navegador (PNG em Canvas)
+            new QRCode(view, {
+                text: link,
+                width: 180,
+                height: 180,
+                colorDark : "#1A3C5E",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
 
-        // Se a biblioteca falhar ao carregar por falta de internet, avisamos
-        if (typeof QRious === 'undefined') {
-            alert("Erro: O navegador bloqueou o gerador. Tente conectar à internet apenas uma vez para carregar ou use um navegador diferente.");
-            return;
+            // 2. Cria o objeto vetorial SVG (para download)
+            currentQR = new QRCodeSVG({
+                text: link,
+                width: 500, // Resolução alta para download
+                height: 500,
+                color : "#1A3C5E",
+                background : "#ffffff",
+                ecl : "H"
+            });
         }
 
-        new QRious({
-            element: document.getElementById('canvas'),
-            value: link,
-            size: 250,
-            level: 'H'
-        });
-        
-        document.getElementById('msg').style.display = 'block';
-    }
-</script>
+        // FUNÇÃO DE DOWNLOAD SVG (Vetor)
+        function downloadSVG() {
+            if(!currentQR) return;
+            const svgOutput = currentQR.toString();
+            const blob = new Blob([svgOutput], {type: "image/svg+xml;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "digiart_ar_qrcode.svg";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // FUNÇÃO DE DOWNLOAD PNG (Imagem)
+        function downloadPNG() {
+            const canvas = document.querySelector("#qrcode-view canvas");
+            if(!canvas) return;
+            const url = canvas.toDataURL("image/png");
+            
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "digiart_ar_qrcode.png";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // --- MANTENHA SUAS FUNÇÕES ORIGINAIS DO FIREBASE AQUI ---
+        function gerarTokens() { console.log("Lógica original..."); }
+        function renovarToken() { console.log("Lógica original..."); }
+    </script>
 
 </body>
 </html>
