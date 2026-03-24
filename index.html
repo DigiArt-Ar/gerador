@@ -9,7 +9,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-svg@1.1.0/dist/qrcode-svg.min.js"></script>
 
     <style>
         :root {
@@ -58,8 +57,8 @@
             padding: 30px;
             box-shadow: 0 15px 35px rgba(26, 60, 94, 0.15); 
             border-top: 8px solid var(--azul-escuro); 
-            flex: 1 1 380px; 
-            min-width: 320px; 
+            flex: 1 1 350px; 
+            min-width: 310px; 
             box-sizing: border-box;
             transition: transform 0.2s ease-in-out;
             display: flex;
@@ -68,14 +67,14 @@
 
         .card-sistema h2 { 
             margin-top: 0; 
-            font-size: 1.6rem; 
+            font-size: 1.5rem; 
             color: var(--azul-escuro); 
             border-bottom: 3px solid var(--dourado); 
             padding-bottom: 15px; 
             margin-bottom: 25px;
         }
 
-        .campo-grupo { margin-bottom: 18px; flex-grow: 1; }
+        .campo-grupo { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95rem; color: var(--azul-escuro); }
         
         input { 
@@ -85,7 +84,6 @@
             border-radius: 10px; 
             box-sizing: border-box; 
             font-size: 1rem; 
-            transition: 0.2s;
             background-color: #FBFDFF;
         }
 
@@ -98,54 +96,38 @@
             font-weight: 800; 
             cursor: pointer; 
             transition: 0.3s;
-            margin-top: 15px;
+            margin-top: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .btn-gerar { background-color: var(--dourado); color: var(--azul-escuro); }
-        .btn-gerar:hover { background-color: var(--dourado-escuro); color: #fff; transform: translateY(-2px); }
-
         .btn-renovar { background-color: var(--azul-claro); color: white; }
-        .btn-renovar:hover { background-color: var(--azul-escuro); transform: translateY(-2px); }
+        .btn-preto { background-color: #000; color: white; }
 
-        /* Estilos do NOVO Gerador de QR */
+        button:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        /* Resultado QR */
         #resultado-qr {
-            margin-top: 25px;
-            padding: 20px;
-            background: #fafafa;
-            border-radius: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
             border: 2px dashed #ccc;
+            border-radius: 10px;
             text-align: center;
-            display: none; /* Escondido até gerar */
+            display: none;
         }
-        
-        #qrcode-view { display: flex; justify-content: center; margin-bottom: 20px; }
-        /* O Canvas do navegador agora gera em PRETO */
-        #qrcode-view canvas { border: 5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        
-        .botoes-download {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .btn-down {
-            padding: 12px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.2s;
-            color: white;
-        }
-        
-        .btn-down:hover { transform: scale(1.05); }
 
-        @media (max-width: 800px) { .card-sistema { flex: 1 1 100%; } }
+        #display-qr { display: flex; justify-content: center; margin-bottom: 15px; }
+        canvas { border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        .btn-down {
+            background-color: #27ae60;
+            color: white;
+            font-size: 0.9rem;
+            padding: 12px;
+        }
+
+        @media (max-width: 600px) { .card-sistema { flex: 1 1 100%; } }
     </style>
 </head>
 <body>
@@ -158,24 +140,24 @@
         <section class="card-sistema">
             <h2>🆕 Criar Novo Lote</h2>
             <div class="campo-grupo">
-                <label>Nome da Pasta (Cliente):</label>
+                <label>Nome da Pasta:</label>
                 <input type="text" id="pastaNome" placeholder="Ex: nome-do-cliente">
             </div>
             <div class="campo-grupo">
-                <label>Quantidade de Tokens:</label>
-                <input type="number" id="qtdTokens" value="50" min="1">
+                <label>Qtd Tokens:</label>
+                <input type="number" id="qtdTokens" value="50">
             </div>
-            <button class="btn-gerar" onclick="gerarTokens()">Gerar Tokens e Sincronizar</button>
+            <button class="btn-gerar" onclick="gerarTokens()">Gerar e Sincronizar</button>
         </section>
 
         <section class="card-sistema">
             <h2>⏳ Renovar Acesso</h2>
             <div class="campo-grupo">
-                <label>Token do Cliente:</label>
-                <input type="text" id="tokenRenovar" placeholder="Digite o token">
+                <label>Token Cliente:</label>
+                <input type="text" id="tokenRenovar" placeholder="Token aqui">
             </div>
             <div class="campo-grupo">
-                <label>Dias de Acréscimo:</label>
+                <label>Dias:</label>
                 <input type="number" id="validadeDias" value="365">
             </div>
             <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
@@ -185,22 +167,61 @@
             <h2>📱 Gerador de QR Code</h2>
             <div class="campo-grupo">
                 <label>Link do GitHub Pages:</label>
-                <input type="text" id="urlInput" placeholder="https://davidbarcelos.github.io/...">
+                <input type="text" id="urlInput" placeholder="https://...">
             </div>
-            <button class="btn-gerar" onclick="gerarEVisualizarQR()" style="background-color: var(--azul-escuro); color: white;">Gerar QR Code ✨</button>
+            <button class="btn-preto" onclick="gerarQR()">Gerar QR Code ✨</button>
             
             <div id="resultado-qr">
-                <div id="qrcode-view"></div>
-                
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Download do QR Code (PRETO PADRÃO):</p>
-                <div class="botoes-download">
-                    <button class="btn-down" style="background:#444" onclick="downloadSVG()">📥 SVG (Vetor)</button>
-                    <button class="btn-down" style="background:#2E7D32" onclick="downloadPNG()">📥 PNG (Imagem)</button>
-                </div>
+                <div id="display-qr"></div>
+                <button class="btn-down" onclick="baixarPNG()">📥 Baixar Imagem (PNG)</button>
             </div>
         </section>
 
     </div>
 
     <script>
-        // ...
+        // LÓGICA DO QR CODE
+        function gerarQR() {
+            const link = document.getElementById("urlInput").value;
+            const display = document.getElementById("display-qr");
+            const box = document.getElementById("resultado-qr");
+
+            if(!link) { alert("Insira o link!"); return; }
+
+            display.innerHTML = "";
+            box.style.display = "block";
+
+            new QRCode(display, {
+                text: link,
+                width: 180,
+                height: 180,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
+        function baixarPNG() {
+            const canvas = document.querySelector("#display-qr canvas");
+            if(!canvas) return;
+            const a = document.createElement("a");
+            a.href = canvas.toDataURL("image/png");
+            a.download = "qrcode-digiart.png";
+            a.click();
+        }
+
+        // --- MANTENHA SUAS FUNÇÕES DO FIREBASE ABAIXO ---
+        // (Cole aqui as chaves e as funções gerarTokens() e renovarToken() originais)
+        
+        function gerarTokens() { 
+            console.log("Chamando função original do Firebase...");
+            // Sua lógica aqui...
+        }
+
+        function renovarToken() { 
+            console.log("Chamando função original do Firebase...");
+            // Sua lógica aqui...
+        }
+    </script>
+</body>
+</html>
