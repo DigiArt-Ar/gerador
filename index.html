@@ -3,206 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Gestão - DigiArt AR</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
-
+    <title>Cofre DigiArt AR - Painel de Controle</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* DEFINIÇÃO DE CORES DIGIART (Baseado no seu logo) */
         :root {
-            --azul-escuro: #1A3C5E; /* Base do ícone */
-            --azul-claro: #4F93BF; /* Brilho e anel */
-            --dourado: #FFD700; /* Destaque para CTAs */
-            --dourado-escuro: #B8860B; /* Para hover */
-            --fundo: #E6F0F5; /* Fundo suave */
+            --azul-digiart: #0047AB;
+            --azul-claro: #00BFFF;
+            --dark: #1a1a1a;
+            --branco: #ffffff;
+            --cinza: #f4f4f4;
         }
 
-        /* Estilo Base */
-        body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--fundo); 
-            margin: 0; 
-            padding: 20px; 
-            color: #333; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--cinza);
+            margin: 0;
+            padding: 20px;
+            color: var(--dark);
         }
 
-        h1 { 
-            text-align: center; 
-            color: var(--azul-escuro); 
-            margin-bottom: 10px; 
-            font-size: 2.2rem;
-            font-weight: 800;
-        }
-
-        .subtitulo {
-            text-align: center;
-            color: var(--azul-claro);
-            margin-bottom: 40px;
-            font-weight: 400;
-        }
-
-        /* CONTAINER RESPONSIVO (Lado a Lado / Empilhado) */
-        .dashboard-container {
-            display: flex;
-            flex-wrap: wrap; /* Segredo da responsividade: quebra linha se não couber */
-            gap: 25px; 
-            justify-content: center;
-            max-width: 1200px;
+        .container {
+            max-width: 900px;
             margin: 0 auto;
-        }
-
-        /* CARDS (Painéis) - Com degradê sutil do azul escuro para o claro */
-        .card-sistema {
-            background: linear-gradient(135deg, #fff 60%, var(--fundo) 100%);
-            border-radius: 20px;
+            background: var(--branco);
             padding: 30px;
-            box-shadow: 0 15px 35px rgba(26, 60, 94, 0.15); /* Sombra azulada */
-            border-top: 8px solid var(--azul-escuro); 
-            
-            /* Lógica Flex: Tenta ter 500px, cresce se puder, quebra se < 500px */
-            flex: 1 1 500px; 
-            min-width: 300px; /* Não deixa ficar espremido demais */
-            box-sizing: border-box;
-            transition: transform 0.2s ease-in-out;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        /* Destaque dourado no título do cartão */
-        .card-sistema h2 { 
-            margin-top: 0; 
-            font-size: 1.6rem; 
-            color: var(--azul-escuro); 
-            border-bottom: 3px solid var(--dourado); 
-            padding-bottom: 15px; 
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--azul-digiart);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        header h1 { color: var(--azul-digiart); margin: 0; font-size: 28px; }
+        header span { color: var(--azul-claro); font-weight: bold; }
+
+        .secao {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
             margin-bottom: 25px;
         }
 
-        /* Ajustes de Input */
-        .campo-grupo { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.95rem; color: var(--azul-escuro); }
-        
-        input { 
-            width: 100%; 
-            padding: 14px; 
-            border: 2px solid #D1E1EB; /* Borda levemente azulada */
-            border-radius: 10px; 
-            box-sizing: border-box; 
-            font-size: 1rem; 
-            transition: 0.2s;
-            background-color: #FBFDFF;
-        }
+        h3 { color: var(--azul-digiart); margin-top: 0; border-left: 4px solid var(--azul-claro); padding-left: 10px; }
 
-        input:focus {
-            outline: none;
-            border-color: var(--azul-claro);
-            box-shadow: 0 0 10px rgba(79, 147, 191, 0.2);
-        }
-
-        /* Campo de Validade (Agora Habilitado) */
-        input[type="number"]#validadeDias {
-            font-weight: bold;
-            color: #27ae60; /* Verde para destacar q é tempo */
-        }
-        
-        /* Botões de Ação */
-        button { 
-            width: 100%; 
-            padding: 16px; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 1.1rem; 
-            font-weight: 800; 
-            cursor: pointer; 
-            transition: 0.3s;
-            margin-top: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Botão Dourado para Criar (Chama atenção) */
-        .btn-gerar { 
-            background-color: var(--dourado); 
-            color: var(--azul-escuro); 
-        }
-        .btn-gerar:hover { 
-            background-color: var(--dourado-escuro); 
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
-        /* Botão Azul para Renovação (Padrão DigiArt) */
-        .btn-renovar { 
-            background-color: var(--azul-claro); 
-            color: white; 
-        }
-        .btn-renovar:hover { 
-            background-color: var(--azul-escuro); 
-            transform: translateY(-2px);
-        }
-
-        /* Feedback Visual */
-        #statusMessage {
-            position: fixed; top: 20px; right: 20px;
-            padding: 15px 25px; border-radius: 8px; color: white;
-            font-weight: bold; display: none; z-index: 1000;
-        }
-
-        /* MEDIA QUERY: Ajustes finos para celulares pequenos */
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            h1 { font-size: 1.8rem; }
-            .card-sistema { padding: 20px; flex: 1 1 100%; }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="statusMessage"></div>
-
-    <h1>💎 Painel de Controle DigiArt</h1>
-    <p class="subtitulo">Gestão Avançada de Realidade Aumentada</p>
-
-    <div class="dashboard-container">
-        
-        <section class="card-sistema">
-            <h2>🆕 Criar Novo Lote</h2>
-            
-            <div class="campo-grupo">
-                <label>Nome da Pasta (Cliente - ex: joao-fotos):</label>
-                <input type="text" id="pastaNome" placeholder="Ex: nome-do-cliente">
-            </div>
-            
-            <div class="campo-grupo">
-                <label>Quantidade de Tokens a Gerar:</label>
-                <input type="number" id="qtdTokens" value="50" min="1" max="500">
-            </div>
-            
-            <button class="btn-gerar" onclick="gerarTokens()">Gerar Tokens e Sincronizar</button>
-        </section>
-
-        <section class="card-sistema">
-            <h2>⏳ Renovar Acesso</h2>
-            
-            <div class="campo-grupo">
-                <label>Token do Cliente (ex: s1a2b3):</label>
-                <input type="text" id="tokenRenovar" placeholder="Digite o token exato">
-            </div>
-            
-            <div class="campo-grupo">
-                <label>Dias de Acréscimo (Editável):</label>
-                <input type="number" id="validadeDias" value="365" min="1" placeholder="Ex: 30, 90, 365">
-            </div>
-            
-            <button class="btn-renovar" onclick="renovarToken()">Confirmar Renovação</button>
-        </section>
-
-    </div>
-
-    <script>
-        // ... (Configuração do Firebase) ...
-        // ... (Lógica do gerarTokens() com Merge) ...
-        // ... (Lógica do renovarToken()) ...
-    </script>
-
-</body>
-</html>
+        /* Estilo do Gerador
